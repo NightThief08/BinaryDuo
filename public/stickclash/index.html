@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1e1b4b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="format-detection" content="telephone=no">
+  <title>STICK CLASH — instant stickman fights on one device</title>
+  <meta name="description" content="Instant couch-multiplayer stickman fights on ONE device. Play vs a bot or a friend on the same keyboard or touchscreen. No install, no account, works offline.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231e1b4b'/%3E%3Ccircle cx='32' cy='14' r='7' fill='%233b82f6'/%3E%3Cpath d='M32 21v20M32 41l-10 14M32 41l10 14M32 27l-14 6M32 27l16-8' stroke='%233b82f6' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <canvas id="game" aria-label="STICK CLASH game area"></canvas>
+  <div id="safeProbe" aria-hidden="true"></div>
+
+  <!-- In-game buttons -->
+  <div id="hudBtns" class="hidden">
+    <button class="icon-btn small" id="btnPause" aria-label="Pause">⏸</button>
+    <button class="icon-btn small" data-action="mute" aria-label="Sound on/off"><span class="mute-icon">🔊</span></button>
+  </div>
+
+  <!-- HOME -->
+  <section class="screen" id="home">
+    <div class="home-wrap">
+      <h1 class="logo"><span class="l1">STICK</span><span class="l2">CLASH</span></h1>
+      <p class="tagline">Instant stickman fights · one device · no install</p>
+      <div class="big-buttons">
+        <button class="big-btn solo" id="btnSolo"><span class="bb-icon">🤖</span><span><b>PLAY vs BOT</b><small>Solo · 3 levels</small></span></button>
+        <button class="big-btn duo" id="btnDuo"><span class="bb-icon">👥</span><span><b>2 PLAYERS</b><small>Same device</small></span></button>
+      </div>
+      <div class="chips"><span>🎮 3 modes</span><span>🏆 First to 3 wins</span><span>📴 Works offline</span></div>
+      <div class="icon-row">
+        <button class="icon-btn" data-go="settings" aria-label="Settings">⚙️<i>Settings</i></button>
+        <button class="icon-btn" data-action="mute" aria-label="Sound on/off"><span class="mute-icon">🔊</span><i>Sound</i></button>
+        <button class="icon-btn" data-go="stats" aria-label="Stats">📊<i>Stats</i></button>
+        <button class="icon-btn" data-go="howto" aria-label="How to play">❓<i>How to</i></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIFFICULTY -->
+  <section class="screen hidden" id="difficulty">
+    <div class="panel">
+      <button class="back" data-back aria-label="Back">←</button>
+      <h2>Pick your bot</h2>
+      <p class="sub">You can change it any time in Settings</p>
+      <div class="diff-cards">
+        <button class="diff-card easy" data-diff="easy"><span>🐣</span><b>EASY</b><small>First time? Start here</small></button>
+        <button class="diff-card medium" data-diff="medium"><span>🥊</span><b>MEDIUM</b><small>A fair fight</small></button>
+        <button class="diff-card hard" data-diff="hard"><span>🔥</span><b>HARD</b><small>Good luck</small></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODES -->
+  <section class="screen hidden" id="modes">
+    <div class="panel wide">
+      <button class="back" data-back aria-label="Back">←</button>
+      <h2 id="modesTitle">Pick a mode</h2>
+      <p class="sub" id="modesSub"></p>
+      <div class="mode-cards" id="modeCards"></div>
+    </div>
+  </section>
+
+  <!-- CHOOSE YOUR FIGHTER -->
+  <section class="screen hidden" id="fighters">
+    <div class="panel wide fighters-panel">
+      <button class="back" data-back aria-label="Back">←</button>
+      <h2>Choose Your Fighter</h2>
+      <p class="sub" id="fightersSub"></p>
+      <div class="pick-sides" id="pickSides"></div>
+      <p class="bot-status hidden" id="botStatus" aria-live="polite"></p>
+      <button class="btn primary fight-btn" id="btnFight">FIGHT! ▶</button>
+    </div>
+  </section>
+
+  <!-- FIRST-TIME TUTORIAL -->
+  <section class="screen hidden dim" id="tutorial">
+    <div class="panel tut">
+      <div class="tut-head" id="tutHead"></div>
+      <ol class="tut-steps" id="tutSteps"></ol>
+      <div class="progress"><div class="bar" id="tutBar"></div></div>
+      <button class="btn primary" id="btnTutSkip">Got it ▶</button>
+    </div>
+  </section>
+
+  <!-- 3s CONTROL HINT (solo) -->
+  <section class="screen hidden dim" id="hint">
+    <div class="panel hint" id="hintBody"></div>
+  </section>
+
+  <!-- READY SCREEN (2P) -->
+  <section class="screen hidden ready" id="ready">
+    <div class="ready-half p1" id="readyP1"></div>
+    <div class="ready-half p2" id="readyP2"></div>
+    <button class="back floating" data-back aria-label="Back">←</button>
+    <div class="ready-mode" id="readyMode"></div>
+  </section>
+
+  <!-- PAUSE -->
+  <section class="screen hidden dim" id="pause">
+    <div class="panel narrow">
+      <h2>Paused</h2>
+      <button class="btn primary" id="btnResume">▶ Resume</button>
+      <button class="btn" id="btnRestart">↻ Restart</button>
+      <button class="btn" id="btnQuit">⌂ Quit</button>
+      <p class="muted small">Esc / P to resume</p>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="screen hidden dim" id="results">
+    <div class="panel results" id="resultsBody"></div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="screen hidden" id="settings">
+    <div class="panel">
+      <button class="back" data-back aria-label="Back">←</button>
+      <h2>Settings</h2>
+      <div class="settings-list">
+        <label class="toggle"><span>🔊 Sound</span><input type="checkbox" data-setting="sound"><i></i></label>
+        <label class="toggle"><span>📳 Vibration</span><input type="checkbox" data-setting="vibration"><i></i></label>
+        <label class="toggle"><span>💥 Screen shake</span><input type="checkbox" data-setting="shake"><i></i></label>
+        <label class="toggle"><span>🎨 Colour-blind mode</span><input type="checkbox" data-setting="colorblind"><i></i></label>
+        <div class="row"><span>🤖 Bot level</span>
+          <div class="seg" id="segDiff"><button data-sdiff="easy">Easy</button><button data-sdiff="medium">Medium</button><button data-sdiff="hard">Hard</button></div>
+        </div>
+        <div class="row"><span class="dot p1"></span><input class="name" id="nameP1" maxlength="12" placeholder="Player 1" aria-label="Player 1 name"></div>
+        <div class="row"><span class="dot p2"></span><input class="name" id="nameP2" maxlength="12" placeholder="Player 2" aria-label="Player 2 name"></div>
+        <button class="btn" data-go="controls">⌨️ Controls / key bindings</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTROLS / REBINDING -->
+  <section class="screen hidden" id="controls">
+    <div class="panel wide">
+      <button class="back" data-back aria-label="Back">←</button>
+      <h2>Controls</h2>
+      <p class="muted small">Tap a key, then press the new key. Esc cancels.</p>
+      <div class="bind-grid" id="bindGrid"></div>
+      <button class="btn" id="btnResetKeys">↺ Reset to default</button>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="screen hidden" id="stats">
+    <div class="panel">
+      <button class="back" data-back aria-label="Back">←</button>
+      <h2>Stats</h2>
+      <div id="statsBody"></div>
+      <button class="btn danger" id="btnResetStats">Reset stats</button>
+    </div>
+  </section>
+
+  <!-- HOW TO PLAY -->
+  <section class="screen hidden" id="howto">
+    <div class="panel wide">
+      <button class="back" data-back aria-label="Back">←</button>
+      <h2>How to play</h2>
+      <div id="howtoBody"></div>
+    </div>
+  </section>
+
+  <!-- ROTATE PROMPT -->
+  <div id="rotate" class="hidden"><div><div class="phone">📱</div><b>Rotate your phone</b><small>STICK CLASH plays sideways</small></div></div>
+  <div id="toast" class="hidden"></div>
+
+  <!-- Classic scripts (no modules) so index.html also works from file:// -->
+  <script src="js/config.js"></script>
+  <script src="js/characters.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/physics.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/stickman.js"></script>
+  <script src="js/modes/toyDrop.js"></script>
+  <script src="js/modes/crumblingFloor.js"></script>
+  <script src="js/modes/giantTiny.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
