@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#0c1220">
+  <meta name="description" content="STICK CLASH — instant couch-multiplayer stickman fighting on ONE device. No installs, accounts, downloads or internet.">
+  <title>STICK CLASH</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <canvas id="game" aria-label="Fight arena"></canvas>
+
+    <div id="top-right" class="top-right">
+      <button id="btn-pause" class="icon-btn" aria-label="Pause" hidden>⏸</button>
+      <button id="btn-mute" class="icon-btn" aria-label="Mute or unmute sound">🔊</button>
+    </div>
+
+    <div id="flash" class="flash"></div>
+    <div id="banner" class="banner" hidden>
+      <div id="banner-text" class="banner-text"></div>
+      <div id="banner-sub" class="banner-sub"></div>
+    </div>
+    <div id="toast" class="toast" hidden></div>
+    <pre id="debug" class="debug" hidden></pre>
+
+    <!-- Touch controls: each zone only accepts touches that START inside it (data-slot). -->
+    <div id="touch" class="touch" hidden>
+      <div class="zone zone-p1" data-zone="0">
+        <div class="dpad">
+          <div class="tbtn p1" data-slot="0" data-action="left" aria-label="Move left">◀</div>
+          <div class="tbtn p1" data-slot="0" data-action="right" aria-label="Move right">▶</div>
+        </div>
+        <div class="abtns">
+          <div class="tbtn p1 jump" data-slot="0" data-action="jump" aria-label="Jump"><span class="ico">⤒</span><span>JUMP</span></div>
+          <div class="tbtn p1 hit" data-slot="0" data-action="hit" aria-label="Hit"><span class="ico">👊</span><span>HIT</span></div>
+        </div>
+      </div>
+      <div class="zone zone-p2" data-zone="1">
+        <div class="abtns">
+          <div class="tbtn p2 jump" data-slot="1" data-action="jump" aria-label="Jump"><span class="ico">⤒</span><span>JUMP</span></div>
+          <div class="tbtn p2 hit" data-slot="1" data-action="hit" aria-label="Hit"><span class="ico">👊</span><span>HIT</span></div>
+        </div>
+        <div class="dpad">
+          <div class="tbtn p2" data-slot="1" data-action="left" aria-label="Move left">◀</div>
+          <div class="tbtn p2" data-slot="1" data-action="right" aria-label="Move right">▶</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+    </div>
+
+    <div id="screens" class="screens">
+
+      <!-- HOME -->
+      <section class="screen" data-screen="home">
+        <div class="home-wrap">
+          <h1 class="logo"><span class="logo-blue">STICK</span> <span class="logo-red">CLASH</span></h1>
+          <p class="tag">Instant couch fun on ONE device · no installs · no accounts · no internet</p>
+          <div class="home-buttons">
+            <button class="big-btn btn-bot" id="btn-solo">🤖 PLAY vs BOT</button>
+            <button class="big-btn btn-2p" id="btn-2p">👥 2 PLAYERS <small>(same device)</small></button>
+          </div>
+          <div class="mini-row">
+            <button class="mini-btn" id="btn-howto">❓ <span>How to play</span></button>
+            <button class="mini-btn" id="btn-stats">📊 <span>Stats</span></button>
+            <button class="mini-btn" id="btn-settings">⚙️ <span>Settings</span></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- DIFFICULTY (solo) -->
+      <section class="screen" data-screen="diff">
+        <div class="panel">
+          <h2>Pick your bot</h2>
+          <div class="diff-row">
+            <button class="diff-card" data-diff="easy"><b>😊 Easy</b><span>Perfect for beginners</span></button>
+            <button class="diff-card" data-diff="medium"><b>😤 Medium</b><span>A fair fight</span></button>
+            <button class="diff-card" data-diff="hard"><b>😈 Hard</b><span>Fast and aggressive</span></button>
+          </div>
+          <button class="link-btn" data-back="home">← Back</button>
+        </div>
+      </section>
+
+      <!-- MODE PICK -->
+      <section class="screen" data-screen="modes">
+        <div class="panel wide">
+          <h2 id="modes-title">Pick a mode</h2>
+          <div id="mode-cards" class="mode-cards"></div>
+          <button class="link-btn" data-back="home">← Back</button>
+        </div>
+      </section>
+
+      <!-- TUTORIAL (solo, first time per mode) -->
+      <section class="screen" data-screen="tutorial">
+        <div class="panel">
+          <h2 id="tut-title">How it works</h2>
+          <div id="tut-anim" class="tut-anim">🥊</div>
+          <ul id="tut-steps" class="tut-steps"></ul>
+          <div class="row-btns">
+            <button class="link-btn" id="tut-skip">Skip</button>
+            <button class="big-btn btn-bot small" id="tut-ok">Got it</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONTROL HINT (solo, 3 seconds, tap to skip) -->
+      <section class="screen clear" data-screen="hint">
+        <div class="hint-wrap" id="hint-tap">
+          <div class="hint-title" id="hint-mode"></div>
+          <div class="hint-keys" id="hint-keys"></div>
+          <div class="hint-bar"><div id="hint-fill" class="hint-fill"></div></div>
+          <div class="hint-skip">Tap to start</div>
+        </div>
+      </section>
+
+      <!-- READY (2P) -->
+      <section class="screen clear" data-screen="ready">
+        <div class="ready-wrap">
+          <div class="half p1" id="ready-p1">
+            <div class="who" id="ready-name-0">P1</div>
+            <div class="keys" id="ready-keys-0"></div>
+            <div class="ready-mark" id="ready-mark-0">Press HIT when ready</div>
+          </div>
+          <div class="half p2" id="ready-p2">
+            <div class="who" id="ready-name-1">P2</div>
+            <div class="keys" id="ready-keys-1"></div>
+            <div class="ready-mark" id="ready-mark-1">Press HIT when ready</div>
+          </div>
+          <div class="ready-center">
+            <div class="ready-mode" id="ready-mode"></div>
+            <div class="ready-sub" id="ready-sub">Both ready → 3-2-1</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAUSE -->
+      <section class="screen" data-screen="pause">
+        <div class="panel">
+          <h2>Paused</h2>
+          <p class="muted" id="pause-reason"></p>
+          <div class="stack">
+            <button class="big-btn btn-bot small" id="pause-resume">▶ Resume</button>
+            <button class="big-btn small" id="pause-restart">↻ Restart match</button>
+            <button class="big-btn small" id="pause-quit">⌂ Quit to home</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RESULTS -->
+      <section class="screen" data-screen="results">
+        <div class="panel wide">
+          <h2 id="res-title">WINNER</h2>
+          <p class="muted" id="res-score"></p>
+          <table class="stats-table" id="res-table"></table>
+          <div class="row-btns">
+            <button class="big-btn btn-bot small" id="res-rematch">↻ Rematch</button>
+            <button class="big-btn small" id="res-change">🎮 Change Mode</button>
+            <button class="big-btn small" id="res-home">⌂ Home</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="screen" data-screen="settings">
+        <div class="panel wide scroll">
+          <h2>Settings</h2>
+          <div class="set-grid">
+            <div class="set-row"><span>Sound</span><button class="toggle" id="set-sound"></button></div>
+            <div class="set-row"><span>Vibration (phones)</span><button class="toggle" id="set-vib"></button></div>
+            <div class="set-row"><span>Screen shake</span><button class="toggle" id="set-shake"></button></div>
+            <div class="set-row"><span>Colour-blind mode (orange + shapes)</span><button class="toggle" id="set-cb"></button></div>
+            <div class="set-row"><span>Bot difficulty</span>
+              <div class="seg" id="set-diff">
+                <button data-diff="easy">Easy</button><button data-diff="medium">Medium</button><button data-diff="hard">Hard</button>
+              </div>
+            </div>
+            <div class="set-row"><span>P1 name</span><input id="set-name0" maxlength="14" value="Player 1"></div>
+            <div class="set-row"><span>P2 name</span><input id="set-name1" maxlength="14" value="Player 2"></div>
+          </div>
+          <h3>Controls <small class="muted">(Esc and P are reserved for pause)</small></h3>
+          <div class="bind-grid" id="bind-grid"></div>
+          <div class="row-btns">
+            <button class="link-btn" id="set-reset-keys">Reset keys to default</button>
+          </div>
+          <div class="row-btns">
+            <button class="big-btn small" data-back="home">← Back</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- STATS -->
+      <section class="screen" data-screen="stats">
+        <div class="panel wide scroll">
+          <h2>Your stats</h2>
+          <table class="stats-table" id="stats-modes"></table>
+          <p id="stats-streak" class="muted"></p>
+          <h3>Head to head (2 players)</h3>
+          <div id="stats-h2h" class="muted">No 2-player matches yet.</div>
+          <div class="row-btns">
+            <button class="link-btn" id="stats-reset">Reset stats</button>
+            <button class="big-btn small" data-back="home">← Back</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- HOW TO PLAY -->
+      <section class="screen" data-screen="howto">
+        <div class="panel wide scroll">
+          <h2>How to play</h2>
+          <ul class="howto-list">
+            <li>Knock the other stickman off the platform or drain their HP.</li>
+            <li>Best of 3 rounds. Every mode always has a winner.</li>
+            <li>Solo: you are <b>BLUE</b>, the bot is <b>RED</b>.</li>
+            <li>2 players: <b>P1 BLUE</b> on the left, <b>P2 RED</b> on the right, same keyboard or same touchscreen.</li>
+          </ul>
+          <table class="stats-table controls-table">
+            <tr><th>Action</th><th>Solo (desktop)</th><th>P1 (desktop)</th><th>P2 (desktop)</th><th>Touch</th></tr>
+            <tr><td>Move</td><td>A / D</td><td>A / D</td><td>← / →</td><td>◀ ▶ buttons</td></tr>
+            <tr><td>Jump</td><td>W or Space</td><td>W</td><td>↑</td><td>JUMP</td></tr>
+            <tr><td>Hit</td><td>Left-click or F</td><td>F or Left-click</td><td>Right Shift</td><td>HIT</td></tr>
+            <tr><td>Fast-fall</td><td>S</td><td>S</td><td>↓</td><td>—</td></tr>
+            <tr><td>Pause</td><td>Esc or P</td><td>Esc or P</td><td>Esc or P</td><td>⏸</td></tr>
+          </table>
+          <p class="muted">Keys can be rebound in Settings. Press Esc to pause at any time.</p>
+          <div class="row-btns">
+            <button class="big-btn small" data-back="home">← Back</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div id="rotate" class="rotate" aria-hidden="true">
+    <div class="rotate-card">
+      <div class="rotate-icon">📱⟳</div>
+      <h2>Rotate your phone</h2>
+      <p>STICK CLASH plays best in landscape.</p>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/physics.js"></script>
+  <script src="js/stickman.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/modes/toyDrop.js"></script>
+  <script src="js/modes/crumblingFloor.js"></script>
+  <script src="js/modes/giantTiny.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
