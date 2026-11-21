@@ -12,16 +12,27 @@ concurrency:
   group: pages
   cancel-in-progress: true
 jobs:
+  package:
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-name: ${{ steps.name.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - id: name
+        run: echo "value=github-pages-${{ github.run_id }}-${{ github.run_attempt }}" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          name: ${{ steps.name.outputs.value }}
+          path: public/stickclash
   deploy:
+    needs: package
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: public/stickclash
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: ${{ needs.package.outputs.artifact-name }}
